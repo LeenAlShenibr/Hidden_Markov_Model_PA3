@@ -2,10 +2,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.io.IOException;
+import java.io.*;
 
 class Main
 {
+
+  public static String[][] observations;
+  public static PrintWriter out;
+
+
+  //==========================================================================
+  //======== Test Data
+  //==========================================================================
+
 
   public static void processHMM(String path, HMM hmm)
   {
@@ -75,6 +84,55 @@ class Main
 
   }
 
+  public static void processObservations(String path)
+  {
+    try
+    {
+      List<String> lines = Files.readAllLines(Paths.get(path));
+
+      int n = Integer.parseInt(lines.get(0));
+      observations = new String[n][n];
+
+      int index = 0;
+      for(int i = 1; i < lines.size(); i+=2)
+      {
+
+        observations[index] = new String [Integer.parseInt(lines.get(i))];
+
+        String[] splitLine = lines.get(i+1).split(" ");
+
+        for(int j = 0; j < splitLine.length; j++)
+        {
+          observations[index][j] = splitLine[j];
+        }
+
+        index++;
+
+      }
+    }
+    catch(IOException e)
+    {
+      e.printStackTrace();
+    }
+
+    //Check if observations are read correctly.
+    // System.out.println("Observations: ");
+    // System.out.println("\t" + Arrays.deepToString(observations));
+
+  }
+
+  private static void initWriter(String path)
+  {
+    File file = new File(path);
+    try {
+      out = new PrintWriter(file);
+    } catch (FileNotFoundException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+  }
+
+
 
   //To verify the data was processed sucessfully.
   public static void printHMM(HMM hmm)
@@ -99,15 +157,42 @@ class Main
   {
     HMM hmm = new HMM();
 
-    System.out.println(Arrays.toString(args));
-
-
     String hmmMethod = args[0]; //Which HMM method to run
     String pathHMM = args[1];
     String pathOBS = args[2];
 
     processHMM(pathHMM, hmm);
-    printHMM(hmm);
+    // printHMM(hmm);
+
+    processObservations(pathOBS);
+
+    if (hmmMethod.equals("optimize"))
+    {
+
+      //prepare writer
+      String writeFileName = args[3];
+      initWriter(writeFileName);
+
+      //Call optimization method
+
+      //Write HMM
+      hmm.outputHMM(out);
+      out.close();
+    }
+    else if (hmmMethod.equals("statepath"))
+    {
+
+    }
+    else if (hmmMethod.equals("recognize"))
+    {
+
+    }
+    else
+    {
+      System.out.println(hmmMethod + " isn't a valid method.");
+      System.out.println( "optimize, statepath, and recognize are valid methods.");
+
+    }
 
 
   }
