@@ -184,6 +184,10 @@ class Main
       initWriter(writeFileName);
 
       //Call optimization method
+      for(int i = 0; i < observations.length; i++)
+      {
+        hmm.optimize(observations[i]);
+      }
 
       //Write HMM
       hmm.outputHMM(out);
@@ -198,7 +202,10 @@ class Main
     }
     else if (hmmMethod.equals("recognize"))
     {
-
+      for(int i = 0; i < observations.length; i++)
+      {
+        hmm.recognize(observations[i]);
+      }
     }
     else
     {
