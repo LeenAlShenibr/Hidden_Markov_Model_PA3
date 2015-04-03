@@ -16,8 +16,11 @@ class HMM
   public double[][] A;//stateTransitions
   public double[][] B;//stateOutputs
 
-  //Others
-  // public double[][] alphas
+
+  //==========================================================================
+  //======== Utility Methods
+  //==========================================================================
+
 
 
   public void initHMM(int N, int M, int t)
@@ -111,7 +114,7 @@ class HMM
   //==========================================================================
 
 
-  public void recognize(String[] observationStrings) {
+  public double[][] recognize(String[] observationStrings) {
 
     int T2 = observationStrings.length;
     int[] observations  = translateObservations(observationStrings);
@@ -141,11 +144,14 @@ class HMM
       prob += alpha[T2-1][i];
     }
 
-    System.out.println(prob);
+    System.out.printf("%.6f ", prob);
+
+
+    return alpha;
   }
 
 
-  public double statepath(String[] observationStrings)
+  public void statepath(String[] observationStrings)
   {
 
     //==========================================================================
@@ -237,7 +243,7 @@ class HMM
     //======== Print Result
     //==========================================================================
 
-    System.out.print(probT);
+    System.out.printf("%.6f", probT);
 
     if(probT > 0)
     {
@@ -251,67 +257,23 @@ class HMM
 
     System.out.println();
 
-
-
-
-    return 0;
-
   }
 
   public void optimize (String[] observationStrings)
   {
-    int N = pi.length;
     int T2 = observationStrings.length;
     int [] observations  = translateObservations(observationStrings);
 
     double[][] alphas = new double[T2][N];
     double[][] betas = new double[T2][N];
 
-    double sum, prob_O;
+    double sum, sum2, prob;
 
     //==========================================================================
     //======== Forward part
     //==========================================================================
 
-    //Init
-    for (int i = 0; i < N; i++)
-    {
-      alphas[0][i] = pi[i] * B[i][observations[0]];
-    }
-
-
-    //Induction
-    for (int t = 1; t < T2; t++)
-    {
-
-      for (int j = 0; j < N; j++)
-      {
-
-        sum = 0;
-
-        for (int i = 0; i < N; i++)
-        {
-          sum += alphas[t - 1][i] * A[i][j];
-        }
-
-        alphas[t][j] = sum * B[j][observations[t]];
-
-      }
-
-    }
-
-
-    //Termination
-    sum = 0;
-    for (int i = 0; i < N; i++)
-    {
-      sum += alphas[T2-1][i];
-    }
-
-    prob_O = sum;
-
-
-    System.out.printf("%.6f ", prob_O);
+    alphas = recognize(observationStrings);
 
 
     //==========================================================================
@@ -343,177 +305,116 @@ class HMM
 
     }
 
-    System.out.println("Beats: \n " + Arrays.deepToString(betas));
-
-
 
     //==========================================================================
     //======== Reestimation part
     //==========================================================================
 
-    double[][][] xi = new double[T2][N][N];
-    double[][] gammas = new double[T2][N];
-    double[] probs_O = new double[T2];
-    double sum2 = 0;
+    double[] p = new double[T2];
 
-
-    //calculate probs
-    for (int t = 0; t < T2 - 1; t++)
-    {
-
-      sum2 = 0;
-
-      for (int i = 0; i < N; i++)
-      {
-
-        sum = 0;
-
-        for (int j = 0; j < N; j++)
-        {
-          // System.out.println("t is " + t + " i is " + i + " j is " + j);
-          sum += alphas[t][i] * A[i][j] * B[j][observations[t + 1]] * betas[t+1][j];
-        }
-
-        sum2 += sum;
-
-      }
-
-      probs_O[t] = sum2;
-
-    }
-
-
-    double p = 0;
+    //P(O | lambda) at t
     for (int t = 0; t < T2; t++)
     {
-      p += probs_O[t];
+      sum = 0;
+      for (int i = 0; i < N; i++)
+      {
+        sum += alphas[t][i] * betas[t][i];
+      }
+
+      p[t] = sum;
     }
 
 
+    //Gamma
+    double[][] gamma = new double[T2][N];
 
-    //calculate Xi's and Gamma's
+    for (int t = 0; t < T2; t++)
+    {
+      if (p[t] != 0)
+      {
+        for (int i = 0; i < N; i++)
+        {
+          gamma[t][i] = (alphas[t][i] * betas[t][i]) / p[t];
+        }
+      }
+    }
+
+    //Xi
+    double[][][] xi = new double[T2 - 1][N][N];
 
     for (int t = 0; t < T2 - 1; t++)
     {
-
-      for (int i = 0; i < N; i++)
+      if (p[t] != 0)
       {
+        for (int i = 0; i < N; i++)
+        {
+          for (int j = 0; j < N; j++)
+          {
+            xi[t][i][j] = ((alphas[t][i] * A[i][j] * B[j][observations[t+1]] * betas[t+1][j])/p[t]);
+          }
+        }
+      }
+    }
 
-        sum = 0;
+    //pi
+    for (int i = 0; i < N; i++)
+    {
+      pi[i] = gamma[0][i];
+    }
+
+
+    //A
+    for (int i = 0; i < N; i++)
+    {
+      sum = 0; // sum gamma
+      for (int t = 0; t < T2 - 1; t++)
+      {
+        sum += gamma[t][i];
+      }
+
+      if(sum != 0)
+      {
 
         for (int j = 0; j < N; j++)
         {
+          sum2 = 0; // sum xi
 
-          if(probs_O[t] != 0)
+          for (int t = 0; t < T2 - 1; t++)
           {
-            xi[t][i][j] = (alphas[t][i] * A[i][j] * B[j][observations[t + 1]] * betas[t+1][j]) / probs_O[t];
-            sum += xi[t][i][j];
+            sum2 += xi[t][i][j];
           }
 
+          A[i][j] = sum2 / sum;
         }
-
-        gammas[t][i] = sum;
 
       }
 
-
-
     }
 
-    System.out.println("Xis: \n " + Arrays.deepToString(xi));
-
-
-
-    //Reestimate pi
-    for (int i = 0; i < N; i++)
+    //B
+    for (int j = 0; j < N; j++)
     {
-      System.out.println("gamma is " + gammas[0][i]);
-      pi[i] = gammas[0][i];
-
-    }
-
-
-
-    //Reestimate A
-    boolean gamma = false;
-    for (int i = 0; i < N; i++)
-    {
-
-      sum2 = 0;//for gammas
-
-
-      for (int j = 0; j < N; j++)
-      {
-
-        sum = 0;
-
-        for (int t = 0; t < T-1; t++)
-        {
-          sum += xi[t][i][j];
-
-          if (gamma == false)
-          {
-            sum2 += gammas[t][i];
-          }
-        }
-
-        gamma = true;
-        if (sum2 != 0)
-        {
-          A[i][j] = sum / sum2;
-        }
-        else
-        {
-          A[i][j] = 0;
-        }
-      }
-
-      gamma = false;
-    }
-
-
-    //Reestimate B
-
-    for (int i = 0; i < N; i++)
-    {
-
-      sum = 0;//Numerator
-      sum2 = 0;//Denominator
 
       for (int k = 0; k < outputs.length; k++)
       {
 
-        for (int t = 0; t < T; t++)
+        sum = 0;//Numerator
+        sum2 = 0;//Denominator
+
+        for (int t = 0; t < T2; t++)
         {
 
-          if(B[i][k] == observations[t])
-          {
-            sum += gammas[t][i];
-          }
-
-          sum2 += gammas[t][i];
+          sum += (k == observations[t]) ? gamma[t][j] : 0;
+          sum2 += gamma[t][j];
         }
 
-        if (sum2 != 0)
-        {
-          B[i][k] = sum / sum2;
-        }
-        else
-        {
-          B[i][k] = 0;
-        }
+        B[j][k] = (sum2 != 0) ? (sum / sum2) : B[j][k];
       }
 
-
     }
-
-
 
     recognize(observationStrings);
 
   }
-
-
-
 
 }

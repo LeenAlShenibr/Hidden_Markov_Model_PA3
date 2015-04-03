@@ -187,6 +187,7 @@ class Main
       for(int i = 0; i < observations.length; i++)
       {
         hmm.optimize(observations[i]);
+        System.out.println();
       }
 
       //Write HMM
@@ -205,6 +206,7 @@ class Main
       for(int i = 0; i < observations.length; i++)
       {
         hmm.recognize(observations[i]);
+        System.out.println();
       }
     }
     else

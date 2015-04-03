@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="styles.css">
+  <meta charset="UTF-8">
+      <meta charset="utf-8" />
+      <title>P3_report</title>
+  </head>
+  <body class='markdown-preview'><h1 id="hidden-markov-models">Hidden Markov Models</h1>
+<p>CS 440 Spring 2015</p>
+<p>Programming Assignment 3</p>
+<p>Authors: Leen AlShenibr(leenshe@bu.edu) and Veena Dali(vdali@bu.edu)</p>
+<h2 id="code">Code</h2>
+<h2 id="problem-definition">Problem Definition</h2>
+<p>Our project aims to build a basic English sentence recognizer based on a Hidden Markov Model (HMM). The project used three steps: pattern recognition, state-path determination, and optimization. We are working to optimize the HMM model given so that it matches well with the observed sequences. The project’s practical application would be to allow natural language processing.</p>
+<h2 id="methods-experiment">Methods &amp; Experiment</h2>
+<p>Prior to processing the sequences, we have created a program that reads inputs from files with the sequences and output the optimized HMM. Our approach consisted of three parts as listed above. All algorithms were based from taken from Rabiner et. al 1989 (259-265). The pattern recognition used the forward part of a forward/backward procedure. It reported the observation probability of each input sequence. State-path determination used the Viterbi algorithm to find a state-path that is optimal for each observation sequence and gave the probability. In the optimization method, the given HMM was improved by using the Baum-Welch algorithm. The new HMM was output into a file.</p>
+<h2 id="results">Results</h2>
+<p>Here are a few of our results using the observed sequences and HMM we were given.
+<table>
+  <thead>
+    <tr>
+      <th>Sequence</th>
+      <th>Method</th>
+      <th>Probabilites</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Example2.obs</td>
+      <td>Recognize</td>
+      <td>0.000588</td>
+    </tr>
+    <tr>
+      <td>Example2.obs</td>
+      <td>Statepath</td>
+      <td>0.000588 AUXILIARY SUBJECT AUXILIARY SUBJECT AUXILIARY</td>
+    </tr>
+  </tbody>
+</table>
+<h2 id="discussion">Discussion</h2>
+<p>Recognize: We expect the probability for the first two sequences to be high probabilities because they are sentences that are well-structured sentences. However, the probability that we got for these sequences were 2.7% and 2.88%, respectively. The low probabilities for well-structured sequences tells us that the HMM does not match the given observation sequences well. It doesn’t work for the kind of sequences that we are using. Thus, this step would be useful to compare it to other models and choose one that best matches the observations. The HMM doesn’t always give us reasonable answers because the probability is lower than we expected; however, when the probability is 0% for observed sequences, those sequences are unstructured. The output probability for the sequence &quot;movies do students play games&quot; is 0.0189% and for the sequence &quot;games develop play students&quot; is 0%.</p>
+<p>Statepath: We can tell that the path always tries to end with an object and that a predicate is always followed by an object.</p>
+<p>Optimize: For the the Baum-Welch algorithm, it requires the observation probability to be a divisor when calculating the ξt(i,j)values, also known as the probability of being in state Si at time t and at state Si at time t+1. Thus, if the observation probability is 0 then it will be in the denominator and will not be able to give us any useful ξ values that will help us improve the model.</p>
+<p>General Discussion: Our implementations of the HMM methods except for optimize are correct, and produce the correct results based on the HMM. For optimize we reestimated the pi values correctly, but nothing after the first two states for A and B values.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>The HMM must match the observation sequences well for it to produce accurate probabilities.  </p>
+<h2 id="credits-and-bibliography">Credits and Bibliography</h2>
+<p>L. R. Rabiner. A Tutorial on Hidden Markov Models and Selected Applications in Speech Recognition, Proceedings of the IEEE, 77(2), pp. 257-286, 1989.</p></body>
+</html>
